@@ -1,23 +1,18 @@
 package net.floodlightcontroller.statistics;
 
-import java.lang.Thread.State;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-import org.projectfloodlight.openflow.protocol.OFPortStatsEntry;
-import org.projectfloodlight.openflow.protocol.OFPortStatsReply;
-import org.projectfloodlight.openflow.protocol.OFStatsReply;
-import org.projectfloodlight.openflow.protocol.OFStatsRequest;
-import org.projectfloodlight.openflow.protocol.OFStatsType;
-import org.projectfloodlight.openflow.protocol.OFVersion;
+import com.google.common.primitives.UnsignedLong;
+import com.google.common.util.concurrent.ListenableFuture;
+import net.floodlightcontroller.core.IOFSwitch;
+import net.floodlightcontroller.core.internal.IOFSwitchService;
+import net.floodlightcontroller.core.module.FloodlightModuleContext;
+import net.floodlightcontroller.core.module.FloodlightModuleException;
+import net.floodlightcontroller.core.module.IFloodlightModule;
+import net.floodlightcontroller.core.module.IFloodlightService;
+import net.floodlightcontroller.core.types.NodePortTuple;
+import net.floodlightcontroller.restserver.IRestApiService;
+import net.floodlightcontroller.statistics.web.SwitchStatisticsWebRoutable;
+import net.floodlightcontroller.threadpool.IThreadPoolService;
+import org.projectfloodlight.openflow.protocol.*;
 import org.projectfloodlight.openflow.protocol.match.Match;
 import org.projectfloodlight.openflow.protocol.ver13.OFMeterSerializerVer13;
 import org.projectfloodlight.openflow.types.DatapathId;
@@ -27,19 +22,11 @@ import org.projectfloodlight.openflow.types.U64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.primitives.UnsignedLong;
-import com.google.common.util.concurrent.ListenableFuture;
-
-import net.floodlightcontroller.core.IOFSwitch;
-import net.floodlightcontroller.core.internal.IOFSwitchService;
-import net.floodlightcontroller.core.module.FloodlightModuleContext;
-import net.floodlightcontroller.core.module.FloodlightModuleException;
-import net.floodlightcontroller.core.module.IFloodlightModule;
-import net.floodlightcontroller.core.module.IFloodlightService;
-import net.floodlightcontroller.restserver.IRestApiService;
-import net.floodlightcontroller.statistics.web.SwitchStatisticsWebRoutable;
-import net.floodlightcontroller.threadpool.IThreadPoolService;
-import net.floodlightcontroller.topology.NodePortTuple;
+import java.lang.Thread.State;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class StatisticsCollector implements IFloodlightModule, IStatisticsService {
 	private static final Logger log = LoggerFactory.getLogger(StatisticsCollector.class);
@@ -81,7 +68,7 @@ public class StatisticsCollector implements IFloodlightModule, IStatisticsServic
 	 * @author Ryan Izard, ryan.izard@bigswitch.com, rizard@g.clemson.edu
 	 *
 	 */
-	private class PortStatsCollector implements Runnable {
+	protected class PortStatsCollector implements Runnable {
 
 		@Override
 		public void run() {
@@ -120,20 +107,60 @@ public class StatisticsCollector implements IFloodlightModule, IStatisticsServic
 							} else {
 								txBytesCounted = pse.getTxBytes().subtract(spb.getPriorByteValueTx());
 							}
+							long speed = getSpeed(npt);
 							long timeDifSec = (System.currentTimeMillis() - spb.getUpdateTime()) / MILLIS_PER_SEC;
 							portStats.put(npt, SwitchPortBandwidth.of(npt.getNodeId(), npt.getPortId(), 
+									U64.ofRaw(speed),
 									U64.ofRaw((rxBytesCounted.getValue() * BITS_PER_BYTE) / timeDifSec), 
 									U64.ofRaw((txBytesCounted.getValue() * BITS_PER_BYTE) / timeDifSec), 
 									pse.getRxBytes(), pse.getTxBytes())
 									);
 							
 						} else { /* initialize */
-							tentativePortStats.put(npt, SwitchPortBandwidth.of(npt.getNodeId(), npt.getPortId(), U64.ZERO, U64.ZERO, pse.getRxBytes(), pse.getTxBytes()));
+							tentativePortStats.put(npt, SwitchPortBandwidth.of(npt.getNodeId(), npt.getPortId(), U64.ZERO, U64.ZERO, U64.ZERO, pse.getRxBytes(), pse.getTxBytes()));
 						}
 					}
 				}
 			}
 		}
+
+		protected long getSpeed(NodePortTuple npt) {
+			IOFSwitch sw = switchService.getSwitch(npt.getNodeId());
+			long speed = 0;
+
+			if(sw == null) return speed; /* could have disconnected; we'll assume zero-speed then */
+			if(sw.getPort(npt.getPortId()) == null) return speed;
+
+			/* getCurrSpeed() should handle different OpenFlow Version */
+			OFVersion detectedVersion = sw.getOFFactory().getVersion();
+			switch(detectedVersion){
+				case OF_10:
+					log.debug("Port speed statistics not supported in OpenFlow 1.0");
+					break;
+
+				case OF_11:
+				case OF_12:
+				case OF_13:
+					speed = sw.getPort(npt.getPortId()).getCurrSpeed();
+					break;
+
+				case OF_14:
+				case OF_15:
+					for(OFPortDescProp p : sw.getPort(npt.getPortId()).getProperties()){
+						if( p.getType() == 0 ){ /* OpenFlow 1.4 and OpenFlow 1.5 will return zero */
+							speed = ((OFPortDescPropEthernet) p).getCurrSpeed();
+						}
+					}
+					break;
+
+				default:
+					break;
+			}
+
+			return speed;
+
+		}
+
 	}
 
 	/**
@@ -248,7 +275,7 @@ public class StatisticsCollector implements IFloodlightModule, IStatisticsServic
 	public Map<NodePortTuple, SwitchPortBandwidth> getBandwidthConsumption() {
 		return Collections.unmodifiableMap(portStats);
 	}
-	
+
 	@Override
 	public synchronized void collectStatistics(boolean collect) {
 		if (collect && !isEnabled) {
