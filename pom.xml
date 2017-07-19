@@ -252,11 +252,11 @@
 			<artifactId>hamcrest-library</artifactId>
 			<version>${lib-hamcrest-version}</version>
 		</dependency>
-		<dependency>
+ 		<dependency>
 			<groupId>org.projectfloodlight</groupId>
 			<artifactId>openflowj</artifactId>
 			<version>3.2.0-SNAPSHOT</version>
-		</dependency>
+		</dependency> 
 		<dependency>
 			<groupId>io.netty</groupId>
 			<artifactId>netty-all</artifactId>
