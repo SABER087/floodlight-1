@@ -22,6 +22,7 @@ public class NullValueStorageException extends StorageException {
     private static final long serialVersionUID = 897572085681189926L;
 
     private static String makeExceptionMessage(String columnName) {
+    	//built-in type 就是内置类型了，像int,char,float,double等
         String message = "Null column value could not be converted to built-in type";
         if (columnName != null) {
             message += ": column name = ";

@@ -33,6 +33,7 @@ public interface IListener<T> {
      * for this module.  In other words, if this function returns true for 
      * the given name, then this listener will be called after that
      * message listener.
+     * 返回TURE的话 ，表示 name对应的模块在 本模块之前执行
      * @param type the object type to which this applies
      * @param name the name of the module
      * @return whether name is a prerequisite.
@@ -44,6 +45,7 @@ public interface IListener<T> {
      * for this module.  In other words, if this function returns true for 
      * the given name, then this listener will be called before that
      * message listener.
+     * 返回TURE的话 ，表示 name对应的模块需要在 本模块之后执行
      * @param type the object type to which this applies
      * @param name the name of the module
      * @return whether name is a post-requisite.

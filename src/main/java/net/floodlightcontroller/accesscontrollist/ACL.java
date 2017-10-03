@@ -63,9 +63,9 @@ public class ACL implements IACLService, IFloodlightModule, IDeviceListener {
 	private APManager apManager;
 	private int lastRuleId = 1; // rule id counter
 	private Map<Integer, ACLRule> aclRules;
-	private Map<String, Integer> dpid2FlowPriority;
-	private Map<Integer, Set<String>> ruleId2Dpid;
-	private Map<Integer, Set<String>> ruleId2FlowName;
+	private Map<String, Integer> dpid2FlowPriority;	// 第一个是 dpid， 第二个是 Priority
+	private Map<Integer, Set<String>> ruleId2Dpid;	// Map<Integer, Set<String>> ,Integer 是ruleId， Set<String>>是存放dpid的集合
+	private Map<Integer, Set<String>> ruleId2FlowName;	//Map<Integer, Set<String>> ,Integer 是ruleId， Set<String>>是存放flowName流名称的集合
 	private Map<Integer, List<Integer>> deny2Allow;
 
 	private final int DEFAULT_PRIORITY = 30000;
@@ -120,7 +120,8 @@ public class ACL implements IACLService, IFloodlightModule, IDeviceListener {
 	/**
 	 * Checks if the new ACL rule matches an existing rule. If existing allowing
 	 * rules matches the new denying rule, store the mappings.
-	 * 
+	 * 检查新加入的ACL规则是否匹配已存在的 ，如果已存在的准入规则匹配到了这个新加入的拒绝规则，将它存储到 映射表中
+	 * （match）意味着： 如 aRule.match(bRule) , aRule的 ACLRule的 愿和目的IP是属于 bRule的 子网
 	 * @return true if the new ACL rule matches an existing rule, false
 	 *         otherwise
 	 */
@@ -129,8 +130,8 @@ public class ACL implements IACLService, IFloodlightModule, IDeviceListener {
 		for (ACLRule existingRule : getRules()) {
 			if (newRule.match(existingRule)) {
 				return true;
-			}
 
+			}
 			if (existingRule.getAction() == Action.ALLOW
 					&& newRule.getAction() == Action.DENY) {
 				if (existingRule.match(newRule)) {
@@ -152,7 +153,7 @@ public class ACL implements IACLService, IFloodlightModule, IDeviceListener {
 		aclRules.put(rule.getId(), rule);
 		logger.info("ACL rule(id:{}) is added.", rule.getId());
 		if (rule.getAction() != Action.ALLOW) {
-			enforceAddedRule(rule);
+			enforceAddedRule(rule);	//执行禁止通行的ACL控制，生成对应的flow流 来禁止通行
 		}
 		return true;
 	}
@@ -187,10 +188,12 @@ public class ACL implements IACLService, IFloodlightModule, IDeviceListener {
 	 */
 	private void enforceAddedRule(ACLRule denyRule) {
 		Set<String> dpidSet;
+		//如果ACLRule的源地址不为空，则表示 所有 连接源地址的dpid的交换机 上的入端口禁止 匹配到该flow流的数据包通行
 		if (denyRule.getNw_src() != null) {
 			dpidSet = apManager.getDpidSet(denyRule.getNw_src_prefix(),
 					denyRule.getNw_src_maskbits());
 		} else {
+			//如果ACLRule的源地址为空，则表示 所有 连接目的地址的dpid集合的交换机上的出端口禁止 匹配到该flow流的数据包通行
 			dpidSet = apManager.getDpidSet(denyRule.getNw_dst_prefix(),
 					denyRule.getNw_dst_maskbits());
 		}
@@ -233,6 +236,7 @@ public class ACL implements IACLService, IFloodlightModule, IDeviceListener {
 		}
 
 		int priority = getPriorityBySwitch(dpid);
+		//如果ACLRule的源地址不为空，则表示 所有 该dpid交换机上的入端口禁止 匹配到该flow流的数据包通行
 		if (rule.getNw_src() != null) {
 
 			HashMap<String, Object> flow = new HashMap<String, Object>();
@@ -255,6 +259,7 @@ public class ACL implements IACLService, IFloodlightModule, IDeviceListener {
 				flow.put(StaticEntryPusher.matchFieldToColumnName(MatchFields.IP_PROTO),
 						Integer.toString(rule.getNw_proto()));
 			}
+			//如果 的动作ACTION是允许 则，匹配该flow流的数据包由控制器处理转发，否则 该ACLRule规则代表：匹配该flow流的数据包哪也不去
 			if (rule.getAction() == Action.ALLOW) {
 				flow.put(StaticEntryPusher.Columns.COLUMN_ACTIONS,
 						"output=controller");
@@ -365,6 +370,7 @@ public class ACL implements IACLService, IFloodlightModule, IDeviceListener {
 
 		String dpid = HexString.toHexString(switchPort[0].getNodeId()
 				.getLong());
+		//IPv4.fromIPv4Address(ips[0].getInt()); 将int型(其二进制为32位)的IP构造成 正常的IP地址如192.168.0.1
 		String ip = IPv4.fromIPv4Address(ips[0].getInt());
 		logger.debug("AP(dpid:{},ip:{}) is added", dpid, ip);
 

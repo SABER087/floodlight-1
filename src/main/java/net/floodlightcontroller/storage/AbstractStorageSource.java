@@ -234,7 +234,7 @@ implements IStorageSourceService, IFloodlightModule {
 	public Future<?> insertRowAsync(final String tableName,
 			final Map<String,Object> values) {
 		Future<?> future = executorService.submit(
-				new StorageRunnable() {
+				new StorageRunnable() {	//StorageRunnable 是一个抽象类，所以new创建实例时需要实现该抽象类中的抽象方法doStorageOperation()
 					public void doStorageOperation() {
 						insertRow(tableName, values);
 					}

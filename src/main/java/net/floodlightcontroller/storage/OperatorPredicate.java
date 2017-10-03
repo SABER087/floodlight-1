@@ -24,7 +24,11 @@ package net.floodlightcontroller.storage;
  * @author rob
  */
 public class OperatorPredicate implements IPredicate {
-    
+    /**
+     * eq相等   ne、neq不相等，   gt大于， lt小于,   gte、ge大于等于   lte、le 小于等于
+     * @author hp
+     *
+     */
     public enum Operator { EQ, LT, LTE, GT, GTE };
     
     private String columnName;

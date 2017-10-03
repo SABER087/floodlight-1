@@ -63,7 +63,11 @@ import net.floodlightcontroller.util.OFMatchWithSwDpid;
  * and remove them (specifically flows with an idle timeout that would not be
  * exhausted). Once the flows are deleted Floodlight will re-evaluate the path
  * the traffic should take with it's updated topology map.
- *
+ *	流量的调节模块，通过port_down事件触发。这个模块
+ *	将递归地跟踪来自立即受影响的交换机的所有流。
+ *	并删除它们（特别是在没有空闲超时的情况下流）
+ *	筋疲力尽）。一旦流删除floodlight将重新评估路径
+ *	流量应采用更新的拓扑图。
  * @author Jason Parraga
  */
 

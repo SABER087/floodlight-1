@@ -29,6 +29,8 @@ import org.projectfloodlight.openflow.types.OFPort;
  * A NodePortTuple is similar to a SwitchPortTuple
  * but it only stores IDs instead of references
  * to the actual objects.
+ * NodePortTuple 类中包含两个信息，一个是 交换机的DPID号（DatapathId），另一个是 该交换机的 哪一个端口
+ * 也就是说 NodePortTuple 是用来标识 某一段 路径上的某个节点交换机的入端口或者出端口的 位置
  * @author srini
  */
 

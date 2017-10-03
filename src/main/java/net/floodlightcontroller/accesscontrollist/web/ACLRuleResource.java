@@ -180,7 +180,7 @@ public class ACLRuleResource extends ServerResource {
 				rule.setNw_dst_prefix(cidr[0]);
 				rule.setNw_dst_maskbits(cidr[1]);
 			}
-
+			//该ACL只提供了  TCP UDP 和 ICMP 的 协议
 			else if ("nw-proto".equals(key)) {
 				if ("TCP".equalsIgnoreCase(value)) {
 					rule.setNw_proto(6);

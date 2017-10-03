@@ -741,7 +741,8 @@ public class Device implements IDevice {
 			if (validIP)
 				vals.add(e.getIpv4Address());
 		}
-
+		//先用 TreeSet<IPv4Address> vals 集合存数据（add方法），然后由于TreeSet是Collection的子类，使用 Collection<E> 的
+		//toArray 将其转为数组
 		return vals.toArray(new IPv4Address[vals.size()]);
 	}
 

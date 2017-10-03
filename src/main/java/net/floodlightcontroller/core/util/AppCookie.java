@@ -48,8 +48,14 @@ import org.projectfloodlight.openflow.types.U64;
 
 public class AppCookie {
     private static final int APP_ID_BITS = 12;
-    private static final long APP_ID_MASK = (1L << APP_ID_BITS) - 1;
-    private static final int APP_ID_SHIFT = 64 - APP_ID_BITS;
+    /**
+     * 1L 64位，(1L << APP_ID_BITS) 及向左移动12位，
+     * 即 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0001 向左移动12位
+     * 为 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0001 0000 0000 0000，然后减去1 
+     * 得 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 1111 1111 1111，
+     */
+    private static final long APP_ID_MASK = (1L << APP_ID_BITS) - 1; 
+    private static final int APP_ID_SHIFT = 64 - APP_ID_BITS; // 52
 
     private static final long USER_MASK = 0x000FFFFFFFFFFFFFL;
 
@@ -58,15 +64,15 @@ public class AppCookie {
 
     /**
      * Returns a mask suitable for matching the app ID within a cookie.
-     * @return a mask representing the bits used for the app ID in the cookie
+     * @return a mask representing the bits used for the app ID in the cookie ，APP ID 占52～63位
      */
-    static public U64 getAppFieldMask() {
+    static public U64 getAppFieldMask() { 
         return U64.of(APP_ID_MASK << APP_ID_SHIFT);
     }
 
     /**
      * Returns a mask suitable for matching the user field within a cookie.
-     * @return a mask representing the bits used for user data in the cookie
+     * @return a mask representing the bits used for user data in the cookie 用户数据 占 0～51位
      */
     static public U64 getUserFieldMask() {
         return U64.of(USER_MASK);
@@ -90,6 +96,7 @@ public class AppCookie {
     }
 
     /**
+     * 从一个 flow cookie中提取 APP id,即向右移动 APP_ID_SHIFT 位（52位）， 然后与 末尾12位全为1的APP_ID_MASK做‘与’运算
      * Extract the application id from a flow cookie. Does <em>not</em>
      * check whether the application id is registered. The app ID is 
      * defined by the {@link #getAppFieldMask()} bits
@@ -101,6 +108,7 @@ public class AppCookie {
     }
 
     /**
+     * 从一个 flow cookie中提取 用户数据, 
      * Extract the user portion from a flow cookie, defined
      * by the {@link #getUserFieldMask()} bits
      * @param cookie

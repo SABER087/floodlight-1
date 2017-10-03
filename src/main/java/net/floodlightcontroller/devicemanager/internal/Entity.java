@@ -45,6 +45,9 @@ import org.projectfloodlight.openflow.types.VlanVid;
  * other packet characteristics we might want to consider as helpful for
  * disambiguating devices.
  * 
+ * 一个类实现了 Camparable 接口表明这个类的对象之间是可以相互比较的。如果用数学语言描述的话就是这个类的对象组成的集合中存在一个全序。
+ * 这样，这个类对象组成的集合就可以使用 Sort 方法排序了。
+ * 
  * Entities are the most basic element of devices; devices consist of one or
  * more entities.  Entities are immutable once created, except for the last
  * seen timestamp.

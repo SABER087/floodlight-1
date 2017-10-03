@@ -37,6 +37,9 @@ public class APManager {
 
 	/**
 	 * get dpid set relating to the given CIDR IP
+	 * 从控制器中 获取所有满足该 CIDR前缀码的 IP的集合 所对应的dpid的集合（通过AP类来对应）
+	 * 如 192.168.0.0／16 ，
+	 * cidrPrefix即192.168.0.0的32位二进制表示形式（用长度32位的int整形表示）， cidrMaskBits则是网络前缀位数 16位
 	 */
 	public Set<String> getDpidSet(int cidrPrefix, int cidrMaskBits) {
 		Set<String> dpidSet = new HashSet<String>();

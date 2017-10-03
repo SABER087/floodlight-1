@@ -59,7 +59,7 @@ public class CPAnalyzer implements ICPAnalyzerService, IFloodlightModule, IOFMes
 
     @Override
     public boolean isCallbackOrderingPostreq(OFType type, String name) {
-        return true; /* all should receive after us */
+        return true; /* all should receive after us ，所有的消息监听模块（IOFMessageListener）将在本模块之后执行 */
     }
 
     @Override

@@ -439,6 +439,8 @@ public class IPv4 extends BasePacket {
     }
 
     /**
+     * 将string类型的 IP地址（如192.168.0.1 ） 构造成 32位二进制的IP地址（当然该32位二进制数是由int类型的长度
+     * 由于该int 是用十进制表示，所以十进制的长度并不是32位，32位是指由二进制表示时Int他的长度位数， 所以不存在越戒等问题 ） 
      * Accepts an IPv4 address of the form xxx.xxx.xxx.xxx, ie 192.168.0.1 and
      * returns the corresponding 32 bit integer.
      * @param ipAddress

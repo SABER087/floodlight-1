@@ -81,6 +81,7 @@ public class IPAddressUtil {
 	}
 
 	/**
+	 * 检测 cidr1 是否是 cidr2 的子网 subnet， 比如 192.168.0.1／24 是否是 192.168.0.1／16 的子网
 	 * check whether cidr1 is a subnet of (or the same as) cidr2
 	 * 
 	 */

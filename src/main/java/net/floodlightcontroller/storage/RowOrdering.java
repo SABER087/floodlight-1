@@ -21,7 +21,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RowOrdering {
-    
+    /**
+     * 升序 和 反序
+     * @author hp
+     *
+     */
     public enum Direction { ASCENDING, DESCENDING };
     
     public class Item {

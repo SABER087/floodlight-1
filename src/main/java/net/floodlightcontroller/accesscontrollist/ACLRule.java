@@ -56,6 +56,10 @@ public class ACLRule {
 	 * check if this rule matches an existing rule:
 	 * a matching means this rule won't take effect at all for reason that
 	 * its working scope is already covered by an existing rule
+	 * 检查此规则是否与现有规则匹配：
+	 * 匹配意味着这条规则根本不会起作用。
+	 * 其工作范围已由现有规则所涵盖。
+	 * match返回true因该 具有的条件是： this.ACLRule （的nw_src和nw_dst）是 参数 ACLRule的子网
 	 */
 	public boolean match(ACLRule r) {
 		if ((this.tp_dst == r.tp_dst || r.tp_dst == 0)
